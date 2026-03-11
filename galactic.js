@@ -1,3 +1,11 @@
+/* TODO: 
+- add central glow
+- implement different types of main sequence stars with different colors and lens flare
+- implement limited star lifetimes
+- add novas, white & brown dwarfs, neutron stars, and black holes(?) for dying stars
+- add interactive mouse controls for timestep increment and viewing angle
+*/
+
 let centerGM = 1; // standard gravitational parameter of center (gravity strength)
 
 class Star {
@@ -5,14 +13,14 @@ class Star {
     this.sma = iSma; // semi major axis (distance between lowest and highest point in orbit, in pixels)
     this.ecc = iEcc; // eccentricity (roundness of orbit, between 0 and 1)
     this.meanM = (centerGM / this.sma**3) ** 0.5 // mean motion (average angular speed of orbiting body)
-   this.omega = iOmega; // starting position angle from canvas center
+    this.omega = iOmega; // starting position angle from canvas center
   }
   
-  //use Newton's method to solve Kepler's equations (M = E - e*sin(E))
+  //use Newton's method to solve Kepler's equation (M = E - e*sin(E))
   solveKepler(M, iterations=6) { 
     let E = M; // eccentric anomaly (radially projected angular position from center)  
     
-    //rearranged Kepler's equation: f(E) = E - esin(E) - M
+    //rearranged Kepler's equation: f(E) = E - e*sin(E) - M
     for (let i = 0; i < iterations; ++i) {
         let f = E - this.ecc * sin(E) - M; // f(E), numerator
         let fp = 1 - this.ecc * cos(E); // (dE/df)f(E), denominator
@@ -49,15 +57,15 @@ class Star {
     let x = (width/2) + coords.x;
     let y = (height/2) + coords.y;
 
-   // console.log("drawing at ", x, y);
-   strokeWeight(0);
+    // console.log("drawing at ", x, y);
+    strokeWeight(0);
     fill(color(255,255,255));  
     circle(x,y,5);
   }
 }
 
 let t = 0; //time tracker
-let tStep = 10; //time step increment
+let tStep = 10; //timestep increment
 let stars = []; //stores all star instances
 let starFormationTime = 0; //timesteps till next star is spawned
 
@@ -73,7 +81,7 @@ function draw() {
     starFormationTime = random(10,100);
   }
   for (let i = 0; i < stars.length; ++i) {
-    stars[i].render(t);
+    stars[i].render(t);  
   }
   t += tStep;
   starFormationTime -= tStep;
