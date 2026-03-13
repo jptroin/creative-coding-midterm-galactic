@@ -1,4 +1,4 @@
-  /* TODO: 
+  /* TODO / ideas: 
   - implement different types of main sequence stars with different colors and lens flare
   - implement limited star lifetimes
   - add novas, white dwarfs, neutron stars, and black holes(?) for dying stars
@@ -97,3 +97,4 @@
     t += tStep;
     starFormationTime -= tStep;
   }
+
