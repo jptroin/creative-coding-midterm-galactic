@@ -1,8 +1,8 @@
-  /* TODO / ideas: 
-  - implement different types of main sequence stars with different colors and lens flare
+  /* TODO:
+  - add more consistent pulsing for stars
+  - implement different types of main sequence stars with different colors and lens flare (using inheritance?)
   - implement limited star lifetimes
   - add novas, white dwarfs, neutron stars, and black holes(?) for dying stars
-  - add interactive mouse controls for timestep increment and viewing angle
   */
   
   let centerGM = 1; // standard gravitational parameter of center (gravity strength)
@@ -57,8 +57,11 @@
       let coords = this.getOrbitState(t);
       let x = (width/2) + coords.x;
       let y = (height/2) + coords.y;
-  
-      // console.log("drawing at ", x, y);
+      
+      let centerY = width/2;
+      let mouseVal = (mouseY - centerY)/centerY; //between -1 and 1, determines viewing angle of galaxy
+      y = centerY + ((y-centerY) * mouseVal); //projected y coordinate after mouse rotation
+      
       strokeWeight(0);
       fill(color(random(0,255),random(0,255),random(0,255)));  
       circle(x,y,random(3,10));
@@ -70,7 +73,7 @@
   }
   
   let t = 0; //time tracker
-  let tStep = 10; //timestep increment
+  let tStep = 10; //timestep increment, default 10
   let stars = []; //stores all star instances
   let starFormationTime = 0; //timesteps till next star is spawned
   
@@ -94,7 +97,8 @@
       fill(255, 255 - i, 255 - i*10, 50 - i*3);
       circle(width/2, height/2, i*20 + 5);
     }
+    tStep = mouseX/4;
+    
     t += tStep;
     starFormationTime -= tStep;
   }
-
