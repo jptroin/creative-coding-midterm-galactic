@@ -71,7 +71,7 @@
 	  constructor(iSma, iEcc, iOmega, t0) {
 	     super(iSma, iEcc, iOmega, t0);
 		  this.lifetime = 1000;
-		  this.iColor = color(50, 50, 255, 255);
+		  this.iColor = color(100, 100, 255, 255);
 		  this.fColor = color(255, 50, 50, 255); 
 		  this.iRSize = 10; // initial physical radius
 		  this.fRSize = 20; // final physical radius
@@ -106,19 +106,411 @@
 		  fill(c);
 		  circle(screenState.x, screenState.y, s);
 		  fill(0,0,0,0);
-		  //add 20 layers of glow effect
+		  
+		  //add 20 layers of glow effect with differing size depending on distance to center
+		  let glowWeight;
+		  if (screenState.r < 100) {
+			  glowWeight = 3;
+		  } else if (screenState.r < 200) {
+			  glowWeight = 2;
+		  } else {
+			  glowWeight = 1;
+		  }
 		  for (let i = 0; i < 20; ++i) {
-			  s += 2;
+			  s += glowWeight;
+			  strokeWeight(glowWeight);
 			  stroke(c); //only tracing outlines to prevent washing out colors from multiple layers
 			  circle(screenState.x, screenState.y, s);
-			  c = color(red(c), blue(c), green(c), alpha(c)*0.8);
+			  c = color(red(c), green(c), blue(c), alpha(c)*0.8); // reduce alpha by 20% for each subsequent glow layer
 		  }
 		  stroke(0,0,0,0);
 		  
 		  return 0; // signals that the star is still alive
 	  }
   }
-  
+
+  class TypeB extends Star {
+	  constructor(iSma, iEcc, iOmega, t0) {
+	     super(iSma, iEcc, iOmega, t0);
+		  this.lifetime = 10000;
+		  this.iColor = color(150, 150, 255, 255);
+		  this.fColor = color(255, 100, 50, 255); 
+		  this.iRSize = 8; // initial physical radius
+		  this.fRSize = 15; // final physical radius
+	  }
+
+	  render(t) {
+		  let s; // physical size of rendered star
+		  let c; // color of rendered star
+		  let screenState = this.getScreenState(t);
+		  let lifeStage = (this.lifetime - this.getLifetime(t))/this.lifetime; //stage of life from 1 (new) to 0 (dying)
+		  if (lifeStage > 0.25) { // normal for 75% of lifetime
+			  s = this.iRSize;
+			  c = this.iColor
+		  } else if (lifeStage > 0.1) { // transitions to red supergiant
+			  let transitionStep = (lifeStage - 0.1) / 0.15; // value from 1 (starting transition) to 0 (ending transition) 
+			  let r = red(this.fColor) + ((red(this.iColor) - red(this.fColor)) * transitionStep);
+			  let g = green(this.fColor) + ((green(this.iColor) - green(this.fColor)) * transitionStep);
+			  let b = blue(this.fColor) + ((blue(this.iColor) - blue(this.fColor)) * transitionStep);
+			  s = this.fRSize + ((this.iRSize - this.fRSize) * transitionStep);
+			  c = color(r,g,b, 255)
+		  } else if (lifeStage > 0) { // stays red supergiant for last 10% of lifetime
+			  s = this.fRSize;
+			  c = this.fColor;
+		  } else if (lifeStage > -0.1) { //supernova
+			  let transitionStep = abs(lifeStage) / 0.1; // value from 0 (starting transition) to 1 (ending transition)
+			  s = this.fRSize + (((this.fRSize * 5) - this.fRSize) * transitionStep);
+			  let a = (1 - transitionStep) * 255; //fading out the supernova
+			  c = color(255,255,255, a);
+		  } else {
+			  return 1; // signals end of life, set to null for garbage collection
+		  }
+		  fill(c);
+		  circle(screenState.x, screenState.y, s);
+		  fill(0,0,0,0);
+		  
+		  //add 20 layers of glow effect with differing size depending on distance to center
+		  let glowWeight;
+		  if (screenState.r < 100) {
+			  glowWeight = 3;
+		  } else if (screenState.r < 200) {
+			  glowWeight = 2;
+		  } else {
+			  glowWeight = 1;
+		  }
+		  for (let i = 0; i < 20; ++i) {
+			  s += glowWeight;
+			  strokeWeight(glowWeight);
+			  stroke(c); //only tracing outlines to prevent washing out colors from multiple layers
+			  circle(screenState.x, screenState.y, s);
+			  c = color(red(c), green(c), blue(c), alpha(c)*0.8); // reduce alpha by 20% for each subsequent glow layer
+		  }
+		  stroke(0,0,0,0);
+		  
+		  return 0; // signals that the star is still alive
+	  }
+  }
+
+  class TypeA extends Star {
+	  constructor(iSma, iEcc, iOmega, t0) {
+	     super(iSma, iEcc, iOmega, t0);
+		  this.lifetime = 25000;
+		  this.iColor = color(255, 255, 255, 255);
+		  this.fColor = color(255, 200, 100, 255); 
+		  this.iRSize = 5; // initial physical radius
+		  this.fRSize = 10; // final physical radius
+	  }
+
+	  render(t) {
+		  let s; // physical size of rendered star
+		  let c; // color of rendered star
+		  let screenState = this.getScreenState(t);
+		  let lifeStage = (this.lifetime - this.getLifetime(t))/this.lifetime; //stage of life from 1 (new) to 0 (dying)
+		  if (lifeStage > 0.25) { // normal for 75% of lifetime
+			  s = this.iRSize;
+			  c = this.iColor
+		  } else if (lifeStage > 0.1) { // transitions to red supergiant
+			  let transitionStep = (lifeStage - 0.1) / 0.15; // value from 1 (starting transition) to 0 (ending transition) 
+			  let r = red(this.fColor) + ((red(this.iColor) - red(this.fColor)) * transitionStep);
+			  let g = green(this.fColor) + ((green(this.iColor) - green(this.fColor)) * transitionStep);
+			  let b = blue(this.fColor) + ((blue(this.iColor) - blue(this.fColor)) * transitionStep);
+			  s = this.fRSize + ((this.iRSize - this.fRSize) * transitionStep);
+			  c = color(r,g,b, 255)
+		  } else if (lifeStage > 0) { // stays red supergiant for last 10% of lifetime
+			  s = this.fRSize;
+			  c = this.fColor;
+		  } else if (lifeStage > -0.1) { // turns into white dwarf
+			  let transitionStep = abs(lifeStage) / 0.1; // value from 0 (starting transition) to 1 (ending transition)
+			  s = this.fRSize + (((this.fRSize / 5) - this.fRSize) * transitionStep);
+			  c = color(255,255,255,255);
+		  } else if (lifeStage > -1) { // white dwarf stays for lifecycle duration
+			  s = 1;
+			  c = color(255,255,255,255);
+		  } else {
+			  return 1; // signals dead star
+		  }
+		  fill(c);
+		  circle(screenState.x, screenState.y, s);
+		  fill(0,0,0,0);
+		  
+		  //add 20 layers of glow effect with differing size depending on distance to center
+		  let glowWeight;
+		  if (screenState.r < 100) {
+			  glowWeight = 3;
+		  } else if (screenState.r < 200) {
+			  glowWeight = 2;
+		  } else {
+			  glowWeight = 1;
+		  }
+		  for (let i = 0; i < 20; ++i) {
+			  s += glowWeight;
+			  strokeWeight(glowWeight);
+			  stroke(c); //only tracing outlines to prevent washing out colors from multiple layers
+			  circle(screenState.x, screenState.y, s);
+			  c = color(red(c), green(c), blue(c), alpha(c)*0.8); // reduce alpha by 20% for each subsequent glow layer
+		  }
+		  stroke(0,0,0,0);
+		  
+		  return 0; // signals that the star is still alive
+	  }
+  }
+
+  class TypeF extends Star {
+	  constructor(iSma, iEcc, iOmega, t0) {
+	     super(iSma, iEcc, iOmega, t0);
+		  this.lifetime = 50000;
+		  this.iColor = color(255, 255, 150, 255);
+		  this.fColor = color(255, 200, 50, 255); 
+		  this.iRSize = 4; // initial physical radius
+		  this.fRSize = 8; // final physical radius
+	  }
+
+	  render(t) {
+		  let s; // physical size of rendered star
+		  let c; // color of rendered star
+		  let screenState = this.getScreenState(t);
+		  let lifeStage = (this.lifetime - this.getLifetime(t))/this.lifetime; //stage of life from 1 (new) to 0 (dying)
+		  if (lifeStage > 0.25) { // normal for 75% of lifetime
+			  s = this.iRSize;
+			  c = this.iColor
+		  } else if (lifeStage > 0.1) { // transitions to red supergiant
+			  let transitionStep = (lifeStage - 0.1) / 0.15; // value from 1 (starting transition) to 0 (ending transition) 
+			  let r = red(this.fColor) + ((red(this.iColor) - red(this.fColor)) * transitionStep);
+			  let g = green(this.fColor) + ((green(this.iColor) - green(this.fColor)) * transitionStep);
+			  let b = blue(this.fColor) + ((blue(this.iColor) - blue(this.fColor)) * transitionStep);
+			  s = this.fRSize + ((this.iRSize - this.fRSize) * transitionStep);
+			  c = color(r,g,b, 255)
+		  } else if (lifeStage > 0) { // stays red supergiant for last 10% of lifetime
+			  s = this.fRSize;
+			  c = this.fColor;
+		  } else if (lifeStage > -0.1) { // turns into white dwarf
+			  let transitionStep = abs(lifeStage) / 0.1; // value from 0 (starting transition) to 1 (ending transition)
+			  s = this.fRSize + (((this.fRSize / 5) - this.fRSize) * transitionStep);
+			  c = color(255,255,255, 255);
+		  } else if (lifeStage > -1) { // white dwarf stays for lifecycle duration
+			  s = 1;
+			  c = color(255,255,255,255);
+		  } else {
+			  return 1; // signals dead star
+		  }
+		  fill(c);
+		  circle(screenState.x, screenState.y, s);
+		  fill(0,0,0,0);
+		  
+		  //add 20 layers of glow effect with differing size depending on distance to center
+		  let glowWeight;
+		  if (screenState.r < 100) {
+			  glowWeight = 3;
+		  } else if (screenState.r < 200) {
+			  glowWeight = 2;
+		  } else {
+			  glowWeight = 1;
+		  }
+		  for (let i = 0; i < 20; ++i) {
+			  s += glowWeight;
+			  strokeWeight(glowWeight);
+			  stroke(c); //only tracing outlines to prevent washing out colors from multiple layers
+			  circle(screenState.x, screenState.y, s);
+			  c = color(red(c), green(c), blue(c), alpha(c)*0.8); // reduce alpha by 20% for each subsequent glow layer
+		  }
+		  stroke(0,0,0,0);
+		  
+		  return 0; // signals that the star is still alive
+	  }
+  }
+
+  class TypeG extends Star {
+	  constructor(iSma, iEcc, iOmega, t0) {
+	     super(iSma, iEcc, iOmega, t0);
+		  this.lifetime = 100000;
+		  this.iColor = color(255, 200, 100, 255);
+		  this.fColor = color(255, 150, 50, 255); 
+		  this.iRSize = 3; // initial physical radius
+		  this.fRSize = 6; // final physical radius
+	  }
+
+	  render(t) {
+		  let s; // physical size of rendered star
+		  let c; // color of rendered star
+		  let screenState = this.getScreenState(t);
+		  let lifeStage = (this.lifetime - this.getLifetime(t))/this.lifetime; //stage of life from 1 (new) to 0 (dying)
+		  if (lifeStage > 0.25) { // normal for 75% of lifetime
+			  s = this.iRSize;
+			  c = this.iColor
+		  } else if (lifeStage > 0.1) { // transitions to red supergiant
+			  let transitionStep = (lifeStage - 0.1) / 0.15; // value from 1 (starting transition) to 0 (ending transition) 
+			  let r = red(this.fColor) + ((red(this.iColor) - red(this.fColor)) * transitionStep);
+			  let g = green(this.fColor) + ((green(this.iColor) - green(this.fColor)) * transitionStep);
+			  let b = blue(this.fColor) + ((blue(this.iColor) - blue(this.fColor)) * transitionStep);
+			  s = this.fRSize + ((this.iRSize - this.fRSize) * transitionStep);
+			  c = color(r,g,b, 255)
+		  } else if (lifeStage > 0) { // stays red supergiant for last 10% of lifetime
+			  s = this.fRSize;
+			  c = this.fColor;
+		  } else if (lifeStage > -0.1) { // turns into white dwarf
+			  let transitionStep = abs(lifeStage) / 0.1; // value from 0 (starting transition) to 1 (ending transition)
+			  s = this.fRSize + (((this.fRSize / 5) - this.fRSize) * transitionStep);
+			  c = color(255,255,255, 255);
+		  } else if (lifeStage > -1) { // white dwarf stays for lifecycle duration
+			  s = 1;
+			  c = color(255,255,255,255);
+		  } else {
+			  return 1; // signals dead star
+		  }
+		  fill(c);
+		  circle(screenState.x, screenState.y, s);
+		  fill(0,0,0,0);
+		  
+		  //add 20 layers of glow effect with differing size depending on distance to center
+		  let glowWeight;
+		  if (screenState.r < 100) {
+			  glowWeight = 3;
+		  } else if (screenState.r < 200) {
+			  glowWeight = 2;
+		  } else {
+			  glowWeight = 1;
+		  }
+		  for (let i = 0; i < 20; ++i) {
+			  s += glowWeight;
+			  strokeWeight(glowWeight);
+			  stroke(c); //only tracing outlines to prevent washing out colors from multiple layers
+			  circle(screenState.x, screenState.y, s);
+			  c = color(red(c), green(c), blue(c), alpha(c)*0.8); // reduce alpha by 20% for each subsequent glow layer
+		  }
+		  stroke(0,0,0,0);
+		  
+		  return 0; // signals that the star is still alive
+	  }
+  }
+
+  class TypeK extends Star {
+	  constructor(iSma, iEcc, iOmega, t0) {
+	     super(iSma, iEcc, iOmega, t0);
+		  this.lifetime = 200000;
+		  this.iColor = color(255, 150, 0, 255);
+		  this.fColor = color(255, 100, 0, 255); 
+		  this.iRSize = 2; // initial physical radius
+		  this.fRSize = 4; // final physical radius
+	  }
+
+	  render(t) {
+		  let s; // physical size of rendered star
+		  let c; // color of rendered star
+		  let screenState = this.getScreenState(t);
+		  let lifeStage = (this.lifetime - this.getLifetime(t))/this.lifetime; //stage of life from 1 (new) to 0 (dying)
+		  if (lifeStage > 0.25) { // normal for 75% of lifetime
+			  s = this.iRSize;
+			  c = this.iColor
+		  } else if (lifeStage > 0.1) { // transitions to red supergiant
+			  let transitionStep = (lifeStage - 0.1) / 0.15; // value from 1 (starting transition) to 0 (ending transition) 
+			  let r = red(this.fColor) + ((red(this.iColor) - red(this.fColor)) * transitionStep);
+			  let g = green(this.fColor) + ((green(this.iColor) - green(this.fColor)) * transitionStep);
+			  let b = blue(this.fColor) + ((blue(this.iColor) - blue(this.fColor)) * transitionStep);
+			  s = this.fRSize + ((this.iRSize - this.fRSize) * transitionStep);
+			  c = color(r,g,b, 255)
+		  } else if (lifeStage > 0) { // stays red supergiant for last 10% of lifetime
+			  s = this.fRSize;
+			  c = this.fColor;
+		  } else if (lifeStage > -0.1) { // turns into white dwarf
+			  let transitionStep = abs(lifeStage) / 0.1; // value from 0 (starting transition) to 1 (ending transition)
+			  s = this.fRSize + (((this.fRSize / 5) - this.fRSize) * transitionStep);
+			  c = color(255,255,255, 255);
+		  } else if (lifeStage > -1) { // white dwarf stays for lifecycle duration
+			  s = 1;
+			  c = color(255,255,255,255);
+		  } else {
+			  return 1; // signals dead star
+		  }
+		  fill(c);
+		  circle(screenState.x, screenState.y, s);
+		  fill(0,0,0,0);
+		  
+		  //add 20 layers of glow effect with differing size depending on distance to center
+		  let glowWeight;
+		  if (screenState.r < 100) {
+			  glowWeight = 2;
+		  } else if (screenState.r < 200) {
+			  glowWeight = 2;
+		  } else {
+			  glowWeight = 1;
+		  }
+		  for (let i = 0; i < 20; ++i) {
+			  s += glowWeight;
+			  strokeWeight(glowWeight);
+			  stroke(c); //only tracing outlines to prevent washing out colors from multiple layers
+			  circle(screenState.x, screenState.y, s);
+			  c = color(red(c), green(c), blue(c), alpha(c)*0.8); // reduce alpha by 20% for each subsequent glow layer
+		  }
+		  stroke(0,0,0,0);
+		  
+		  return 0; // signals that the star is still alive
+	  }
+  }
+
+  class TypeM extends Star {
+	  constructor(iSma, iEcc, iOmega, t0) {
+	     super(iSma, iEcc, iOmega, t0);
+		  this.lifetime = 500000;
+		  this.iColor = color(255, 0, 0, 255);
+		  this.fColor = color(100, 100, 255, 255); 
+		  this.iRSize = 2; // initial physical radius
+		  this.fRSize = 3; // final physical radius
+	  }
+
+	  render(t) {
+		  let s; // physical size of rendered star
+		  let c; // color of rendered star
+		  let screenState = this.getScreenState(t);
+		  let lifeStage = (this.lifetime - this.getLifetime(t))/this.lifetime; //stage of life from 1 (new) to 0 (dying)
+		  if (lifeStage > 0.25) { // normal for 75% of lifetime
+			  s = this.iRSize;
+			  c = this.iColor
+		  } else if (lifeStage > 0.1) { // transitions to red supergiant
+			  let transitionStep = (lifeStage - 0.1) / 0.15; // value from 1 (starting transition) to 0 (ending transition) 
+			  let r = red(this.fColor) + ((red(this.iColor) - red(this.fColor)) * transitionStep);
+			  let g = green(this.fColor) + ((green(this.iColor) - green(this.fColor)) * transitionStep);
+			  let b = blue(this.fColor) + ((blue(this.iColor) - blue(this.fColor)) * transitionStep);
+			  s = this.fRSize + ((this.iRSize - this.fRSize) * transitionStep);
+			  c = color(r,g,b, 255)
+		  } else if (lifeStage > 0) { // stays red supergiant for last 10% of lifetime
+			  s = this.fRSize;
+			  c = this.fColor;
+		  } else if (lifeStage > -0.1) { // turns into white dwarf
+			  let transitionStep = abs(lifeStage) / 0.1; // value from 0 (starting transition) to 1 (ending transition)
+			  s = this.fRSize + (((this.fRSize / 5) - this.fRSize) * transitionStep);
+			  c = color(255,255,255, 255);
+		  } else if (lifeStage > -1) { // white dwarf stays for lifecycle duration
+			  s = 1;
+			  c = color(255,255,255,255);
+		  } else {
+			  return 1; // signals dead star
+		  }
+		  fill(c);
+		  circle(screenState.x, screenState.y, s);
+		  fill(0,0,0,0);
+		  
+		  //add 20 layers of glow effect with differing size depending on distance to center
+		  let glowWeight;
+		  if (screenState.r < 100) {
+			  glowWeight = 2;
+		  } else if (screenState.r < 200) {
+			  glowWeight = 1;
+		  } else {
+			  glowWeight = 1;
+		  }
+		  for (let i = 0; i < 20; ++i) {
+			  s += glowWeight;
+			  strokeWeight(glowWeight);
+			  stroke(c); //only tracing outlines to prevent washing out colors from multiple layers
+			  circle(screenState.x, screenState.y, s);
+			  c = color(red(c), green(c), blue(c), alpha(c)*0.8); // reduce alpha by 20% for each subsequent glow layer
+		  }
+		  stroke(0,0,0,0);
+		  
+		  return 0; // signals that the star is still alive
+	  }
+  }
+
   let t = 0; //time tracker
   let tStep = 10; //timestep increment, default 10
   let stars = []; //stores all star instances
@@ -133,13 +525,30 @@
   
   function draw() {
     clear();
-    if (starFormationTime <= 0) {
-      stars.push(new TypeO(random(40,250), random(0.05,0.9), random(0,TWO_PI), t));
+    if (starFormationTime <= 0 && stars.length < 200) {
+		let r = int(random(0,7));
+		let s; // type of star to be added
+		if (r == 0) {
+			s = new TypeO(random(40,250), random(0.05,0.9), random(0,TWO_PI), t);
+		} else if (r == 1) {
+			s = new TypeB(random(40,250), random(0.05,0.9), random(0,TWO_PI), t);
+		} else if (r == 2) {
+			s = new TypeA(random(40,250), random(0.05,0.9), random(0,TWO_PI), t);
+		} else if (r == 3) {
+			s = new TypeF(random(40,250), random(0.05,0.9), random(0,TWO_PI), t);
+		} else if (r == 4) {
+			s = new TypeG(random(40,250), random(0.05,0.9), random(0,TWO_PI), t);
+		} else if (r == 5) {
+			s = new TypeK(random(40,250), random(0.05,0.9), random(0,TWO_PI), t);
+		} else {
+			s = new TypeM(random(40,250), random(0.05,0.9), random(0,TWO_PI), t);
+		}
+      stars.push(s);
       starFormationTime = random(10,100);
     }
     for (let i = 0; i < stars.length; ++i) {
       if (stars[i].render(t)) { // returning 1 signals end of life
-		  stars.splice(i,1);
+		  stars.splice(i,1); // remove dead star from list
 	   }
     }
     
