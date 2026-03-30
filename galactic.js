@@ -1,9 +1,3 @@
-  /* TODO:
-  - add more consistent pulsing for stars
-  - implement different types of main sequence stars with different colors and lens flare (using inheritance?)
-  - implement limited star lifetimes
-  - add novas, white dwarfs, neutron stars, and black holes(?) for dying stars
-  */
   
   let centerGM = 1; // standard gravitational parameter of center (gravity strength)
   
@@ -52,24 +46,77 @@
   
       return { x: xr, y: yr }; //return as map
     }
-    
-    render(t) {
+
+	 // returns screen coordinates and radial distance from center
+    getScreenState(t) {
       let coords = this.getOrbitState(t);
-      let x = (width/2) + coords.x;
-      let y = (height/2) + coords.y;
+      let sX = (width/2) + coords.x;
+      let sY = (height/2) + coords.y;
       
       let centerY = width/2;
       let mouseVal = (mouseY - centerY)/centerY; //between -1 and 1, determines viewing angle of galaxy
-      y = centerY + ((y-centerY) * mouseVal); //projected y coordinate after mouse rotation
-      
-      strokeWeight(0);
-      fill(color(random(0,255),random(0,255),random(0,255)));  
-      circle(x,y,random(3,10));
+      sY = centerY + ((sY-centerY) * mouseVal); //projected y coordinate after mouse rotation
+		
+		let sR = sqrt((sX-(width/2))**2 + (sY-(height/2))**2); //calculate radial distance from screen center
+		
+		return {x: sX, y: sY, r: sR};
     }
     
-    getLifetime() {
-      return 
+    getLifetime(t) { //returns timesteps since initiation
+      return t-this.t0;
     }
+  }
+
+  class TypeO extends Star {
+	  constructor(iSma, iEcc, iOmega, t0) {
+	     super(iSma, iEcc, iOmega, t0);
+		  this.lifetime = 1000;
+		  this.iColor = color(50, 50, 255, 255);
+		  this.fColor = color(255, 50, 50, 255); 
+		  this.iRSize = 10; // initial physical radius
+		  this.fRSize = 20; // final physical radius
+	  }
+
+	  render(t) {
+		  let s; // physical size of rendered star
+		  let c; // color of rendered star
+		  let screenState = this.getScreenState(t);
+		  let lifeStage = (this.lifetime - this.getLifetime(t))/this.lifetime; //stage of life from 1 (new) to 0 (dying)
+		  if (lifeStage > 0.25) { // normal for 75% of lifetime
+			  s = this.iRSize;
+			  c = this.iColor
+		  } else if (lifeStage > 0.1) { // transitions to red supergiant
+			  let transitionStep = (lifeStage - 0.1) / 0.15; // value from 1 (starting transition) to 0 (ending transition) 
+			  let r = red(this.fColor) + ((red(this.iColor) - red(this.fColor)) * transitionStep);
+			  let g = green(this.fColor) + ((green(this.iColor) - green(this.fColor)) * transitionStep);
+			  let b = blue(this.fColor) + ((blue(this.iColor) - blue(this.fColor)) * transitionStep);
+			  s = this.fRSize + ((this.iRSize - this.fRSize) * transitionStep);
+			  c = color(r,g,b, 255)
+		  } else if (lifeStage > 0) { // stays red supergiant for last 10% of lifetime
+			  s = this.fRSize;
+			  c = this.fColor;
+		  } else if (lifeStage > -0.1) { //supernova
+			  let transitionStep = abs(lifeStage) / 0.1; // value from 0 (starting transition) to 1 (ending transition)
+			  s = this.fRSize + (((this.fRSize * 5) - this.fRSize) * transitionStep);
+			  let a = (1 - transitionStep) * 255; //fading out the supernova
+			  c = color(255,255,255, a);
+		  } else {
+			  return 1; // signals end of life, set to null for garbage collection
+		  }
+		  fill(c);
+		  circle(screenState.x, screenState.y, s);
+		  fill(0,0,0,0);
+		  //add 20 layers of glow effect
+		  for (let i = 0; i < 20; ++i) {
+			  s += 2;
+			  stroke(c); //only tracing outlines to prevent washing out colors from multiple layers
+			  circle(screenState.x, screenState.y, s);
+			  c = color(red(c), blue(c), green(c), alpha(c)*0.8);
+		  }
+		  stroke(0,0,0,0);
+		  
+		  return 0; // signals that the star is still alive
+	  }
   }
   
   let t = 0; //time tracker
@@ -79,24 +126,23 @@
   
   function setup() {
     createCanvas(800, 800);
+	 stroke(0,0,0,0);
+	 strokeWeight(2);
     background(0);
   }
   
   function draw() {
     clear();
     if (starFormationTime <= 0) {
-      stars.push(new Star(random(50,250), random(0.05,0.9), random(0,TWO_PI)));
+      stars.push(new TypeO(random(40,250), random(0.05,0.9), random(0,TWO_PI), t));
       starFormationTime = random(10,100);
     }
     for (let i = 0; i < stars.length; ++i) {
-      stars[i].render(t);  
+      if (stars[i].render(t)) { // returning 1 signals end of life
+		  stars.splice(i,1);
+	   }
     }
-    let innerGlow = color(255,255,255,200);
-    let outerGlow = color(255,240,70,10);
-    for (let i = 0; i < 20; ++i) { //add central glow
-      fill(255, 255 - i, 255 - i*10, 50 - i*3);
-      circle(width/2, height/2, i*20 + 5);
-    }
+    
     tStep = mouseX/4;
     
     t += tStep;
